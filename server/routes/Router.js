@@ -3,7 +3,7 @@ const Router = new express.Router();
 const Products = require("../models/ProductsSchema");
 const USER = require("../models/UserSchema");
 const bcrypt = require("bcryptjs");
-
+const Authenticate = require("../middleware/Authenticate");
 
 
 // get productsdata api by get
@@ -153,16 +153,79 @@ Router.post("/login", async (req, res) => {
 
 
 // adding data to the cart 
-Router.post("/addcart/:id", async (req, res) => {
+Router.post("/addcart/:id", Authenticate, async (req, res) => {
     try {
         const { id } = req.params;
-        const cart = Products.findOne({ id: id });
+        const cart = await Products.findOne({ id: id });
         console.log(cart + "cart value");
-    }
-    catch (error) {
+
+        const userContact = await USER.findOne({ _id: req.userID })
+        console.log(userContact);
+
+
+        if (userContact) {
+            const cartData = await userContact.addcartdata(cart);
+            await userContact.save();
+            console.log(cartData);
+            res.status(201).json(userContact);
+        }
+        else {
+            res.status(401).json({ error: "invalid user" });
+
+        }
 
     }
+    catch (error) {
+        res.status(401).json({ error: "invalid user" });
+    }
 })
+
+
+
+// update data in api 
+
+Router.put("/", async (req, res) => {
+
+    try {
+        const { name, description, price, category, imageUrl } = req.body;
+        console.log("NAME", name);
+        // update only provided fields
+        if (!name || !description || !price || !category || !imageUrl) {
+            return res.status(400).json({
+                status: "Status Failed",
+                message: "Please fill all fields",
+            });
+        } else {
+            const product = await Products.findById(req.params.id);
+            if (!product) {
+                return res.status(400).json({
+                    status: "Status Failed",
+                    message: "Product not found",
+                });
+            } else {
+                product.id = id;
+                product.url = url;
+                product.price = price;
+                product.category = category;
+                product.imageUrl = imageUrl;
+                await product.save();
+                res.status(200).json({
+                    status: "Status Success",
+                    message: "Product updated",
+                    product: product,
+                });
+            }
+        }
+    }
+    catch (error) {
+        console.log(error.message);
+        res.status(500).json({
+            status: "Status Failed",
+            message: "Server error",
+        });
+    }
+})
+
 
 
 

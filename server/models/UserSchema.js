@@ -66,7 +66,7 @@ UserSchema.pre("save", async function (next) {
 
 UserSchema.methods.generateAuthtoken = async function () {
     try {
-        let token = jwt.sign({ _id: this._id}, secretKey );
+        let token = jwt.sign({ _id: this._id }, secretKey);
         this.tokens = this.tokens.concat({ token: token });
         await this.save();
         return token;
@@ -75,6 +75,22 @@ UserSchema.methods.generateAuthtoken = async function () {
         console.log(error);
     }
 }
+
+
+
+// add to cart data 
+UserSchema.methods.addcartdata = async function (cart) {
+    try {
+        this.carts = this.carts.concat(cart);
+        await this.save();
+        return this.carts
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+
+
 
 const USER = new mongoose.model("USER", UserSchema);
 
